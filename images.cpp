@@ -195,7 +195,30 @@ void ApplyFiltering(Image &image)
       break;
     case 8:
       // Magick::ChannelType ch;
-      image.fx("0.5",ChannelType::AllChannels);
+      double _radiusRatio = 0.25;
+
+      double maxRadius = (pow(image.columns()*0.5,2)+pow(image.rows()*0.5,2));
+
+      std::stringstream os;
+      sf::Clock deltaClock;
+
+      os << "distanceRatio=((i-0.5*w)^2 + (j-0.5*h)^2)/"<< maxRadius <<"; (1-distanceRatio/" << _radiusRatio << ")*";
+      // os << "distanceRatio=(abs(i-0.5*w) + abs(j-0.5*h))/"<< maxRadius <<"; (1-distanceRatio/" << _radiusRatio << ")*";
+
+
+      std::stringstream ros;
+      std::stringstream gos;
+      std::stringstream bos;
+
+      ros << os.str() << "r";
+      gos << os.str() << "g";
+      bos << os.str() << "b";
+
+      image.fx(ros.str(),ChannelType::RedChannel);
+      image.fx(gos.str(),ChannelType::GreenChannel);
+      image.fx(bos.str(),ChannelType::BlueChannel);
+      cout << deltaClock.restart().asSeconds();
+      // delete deltaClock;
       // image.edge(round(_value[0].value));
       break;
     
@@ -444,21 +467,53 @@ void SaveImage()
   ImageInit();
 }
 
-sf::Uint8* GetPixelsFromImage(Image &image)
+sf::Uint8* GetPixelsFromImage(Image &image, Image &originalImage, double origRatio)
 {
-
   int w = image.columns();
   int h = image.rows();
 
+  int w0,w1,ow0,ow1;
+
+  if(origRatio > 0)
+  {
+    w0 = 0;
+    w1 = (1 - origRatio*0.5) * w;
+
+    ow0 = w1;
+    ow1 = w;
+  }
+  else
+  {
+    origRatio *= -1;
+    ow0 = 0;
+    ow1 = origRatio*0.5 * w;
+
+    w0 = ow1;
+    w1 = w;
+  }
+
+  // cout << "New: " << w0 << " " << w1 << endl << "Old: " << ow0 << " " << ow1 << endl;
+ 
+  
+
   PixelPacket *pixels = image.getPixels(0,0,w,h);
+  PixelPacket *originalPixels = originalImage.getPixels(0,0,w,h);
 
   sf::Uint8* output = new sf::Uint8[w*h*4];
 
   double ratio = (double)(pow(2,sizeof(output[0])*8))/(pow(2,sizeof(pixels[0].red)*8));
 
   for (int row = 0; row < h; row++)
-  {
-    for (int column = 0; column < w; column++)
+  { 
+    for (int column = ow0; column < ow1; column++)
+    {
+
+      output[(w * row + column)*4+0] = floor(originalPixels[w * row + column].red*ratio);
+      output[(w * row + column)*4+1] = floor(originalPixels[w * row + column].green*ratio);
+      output[(w * row + column)*4+2] = floor(originalPixels[w * row + column].blue*ratio);
+      output[(w * row + column)*4+3] = 255;
+    }
+    for (int column = w0; column < w1; column++)
     {
 
       output[(w * row + column)*4+0] = floor(pixels[w * row + column].red*ratio);

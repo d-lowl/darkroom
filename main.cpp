@@ -21,7 +21,8 @@ sf::Image spriteImage;
 void RedrawPicture(sf::RenderWindow &window)
 {
   Image &image = images.back();
-  sf::Uint8* pixels = GetPixelsFromImage(image);
+  Image &originalImage = images[0];
+  sf::Uint8* pixels = GetPixelsFromImage(image,originalImage,sf::Joystick::getAxisPosition(0,sf::Joystick::Y)/100);
 
   spriteImage.create(image.columns(), image.rows(), pixels);
   delete [] pixels;
@@ -81,7 +82,7 @@ void CheckInput(float deltaTime)
   float multiplier = (sf::Joystick::isButtonPressed(0, 0) ? 10 : 1) 
                    * (sf::Joystick::isButtonPressed(0, 1) ? 2 : 1)
                    * (sf::Joystick::isButtonPressed(0, 2) ? 0.5f : 1);   
-  // _ShowFPS(deltaTime);
+  _ShowFPS(deltaTime);
   if(!isControl())
   {
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::A))//Increase
@@ -164,8 +165,8 @@ void CheckInput(float deltaTime)
 
 void TraceJoystick()
 {
-  // cout << "X: " << sf::Joystick::getAxisPosition(0, sf::Joystick::X) << "\n";
-  // cout << "Y: " << sf::Joystick::getAxisPosition(0, sf::Joystick::Y) << "\n";
+  cout << "X: " << sf::Joystick::getAxisPosition(0, sf::Joystick::X) << "\n";
+  cout << "Y: " << sf::Joystick::getAxisPosition(0, sf::Joystick::Y) << "\n";
   // cout << "Z: " << sf::Joystick::getAxisPosition(0, sf::Joystick::Z) << "\n";
   // cout << "R: " << sf::Joystick::getAxisPosition(0, sf::Joystick::R) << "\n";
   // // if(fabs(sf::Joystick::getAxisPosition(0, sf::Joystick::U)) > 0.005f)
@@ -240,6 +241,8 @@ int main(int argc,char **argv)
 
 
   sf::Clock deltaClock;
+
+  double yValue = 0;
   while (window.isOpen())
   {
       // Process events
@@ -253,8 +256,11 @@ int main(int argc,char **argv)
 
       CheckInput(deltaClock.restart().asSeconds());
 
-      if(dropChange())
+      if(dropChange() || yValue != sf::Joystick::getAxisPosition(0,sf::Joystick::Y))
+      {
         RedrawPicture(window);
+        yValue = sf::Joystick::getAxisPosition(0,sf::Joystick::Y);
+      }
       // TraceJoystick();
   }
   return 0; 

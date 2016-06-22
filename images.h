@@ -19,5 +19,5 @@ void PreviousSubMode();
 void SaveLayer();
 void SaveImage();
 void Undo();
-sf::Uint8* GetPixelsFromImage(Magick::Image &image);
+sf::Uint8* GetPixelsFromImage(Magick::Image &image, Magick::Image &originalImage, double origRatio);
 #endif
